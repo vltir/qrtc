@@ -11,6 +11,7 @@
     let chatMessages = [];
     let messageInput = '';
     let scanner = null;
+    let errorMessage = '';
 
     // --- 1. PROTOBUF DEFINITION ---
     const SIGNAL_PROTO = `
@@ -57,6 +58,14 @@
         pc.onicegatheringstatechange = () => {
             if (pc.iceGatheringState === 'complete') {
                 generateQrCode(pc.localDescription);
+            }
+        };
+
+        // --- NEU: Den Verbindungsabbruch abfangen ---
+        pc.oniceconnectionstatechange = () => {
+            console.log("ICE State:", pc.iceConnectionState);
+            if (pc.iceConnectionState === 'failed') {
+                errorMessage = "Verbindung fehlgeschlagen! Dein Netzwerk blockiert direkte P2P-Verbindungen (TURN-Server benötigt).";
             }
         };
 
@@ -328,6 +337,12 @@
 <main class="container">
     <h1>P2P Chat</h1>
 
+    {#if errorMessage}
+        <div class="error-banner">
+            <p><strong>Fehler:</strong> {errorMessage}</p>
+            <button class="btn secondary" on:click={() => window.location.reload()}>Neu starten</button>
+        </div>
+    {/if}
     {#if currentStep === 'OFFER_ZEIGEN'}
         <div class="card">
             <p><strong>Schritt 1:</strong> Lass diesen Code scannen oder scanne das andere Gerät.</p>
@@ -459,5 +474,14 @@
         border: 1px solid #ddd;
         border-radius: 8px;
         font-size: 16px;
+    }
+    .error-banner {
+        background-color: #ffebee;
+        color: #c62828;
+        padding: 12px;
+        border-radius: 8px;
+        margin-bottom: 16px;
+        text-align: center;
+        border: 1px solid #ef9a9a;
     }
 </style>
